@@ -14,7 +14,8 @@ Example usage:
     event: ResponseStreamEvent = ...
 """
 
-__version__ = "0.1.0"
+__version__ = "2.3.0"
+__spec_version__ = "2.3.0"
 __spec_hash__ = "915047617fddd639c691fe1e00d5ba6917b7187d7abc62adf074fd7c823bad7f"
 
 # Re-export all types from generated module
