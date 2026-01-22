@@ -262,7 +262,7 @@ def main() -> None:
     save_spec_cache(spec_content, current_hash, current_version)
     generate_models(current_hash, current_version)
 
-    print(f"\nGeneration complete!")
+    print("\nGeneration complete!")
     print(f"Spec version: {current_version}")
     print(f"Suggested package version: {suggest_package_version(current_version)}")
     print(f"\nTo release, update pyproject.toml version and tag: git tag v{suggest_package_version(current_version)}")
