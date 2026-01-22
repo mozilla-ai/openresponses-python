@@ -1,8 +1,8 @@
 # OpenResponses Types
 
-[![PyPI version](https://badge.fury.io/py/openresponses-types.svg)](https://badge.fury.io/py/openresponses-types)
-[![Python versions](https://img.shields.io/pypi/pyversions/openresponses-types.svg)](https://pypi.org/project/openresponses-types/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![PyPI version](https://img.shields.io/pypi/v/openresponses-types)](https://pypi.org/project/openresponses-types/)
+[![Python versions](https://img.shields.io/pypi/pyversions/openresponses-types)](https://pypi.org/project/openresponses-types/)
+[![License](https://img.shields.io/pypi/l/openresponses-types)](https://github.com/mozilla-ai/openresponses-python/blob/main/LICENSE)
 
 Python SDK providing Pydantic models for the [OpenResponses](https://github.com/openresponses/openresponses) API specification.
 
