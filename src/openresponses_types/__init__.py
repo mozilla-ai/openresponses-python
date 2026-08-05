@@ -1,7 +1,7 @@
 """OpenResponses Types - Pydantic models for the OpenResponses API specification."""
 
-__version__ = "2.3.0.post1"
-__spec_version__ = "2.3.0"
-__spec_hash__ = "915047617fddd639c691fe1e00d5ba6917b7187d7abc62adf074fd7c823bad7f"
+__version__ = "2.4.0"
+__spec_version__ = "2026-04-24"
+__spec_hash__ = "693f26090d206230ed22b336681f547a2882cf5b131e86743966cf71bbdeedab"
 
 from openresponses_types.types import *  # noqa: F401, F403
