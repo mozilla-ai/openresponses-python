@@ -34,6 +34,11 @@ OUTPUT_FILE = PROJECT_ROOT / "src" / "openresponses_types" / "types.py"
 INIT_FILE = PROJECT_ROOT / "src" / "openresponses_types" / "__init__.py"
 PYPROJECT_FILE = PROJECT_ROOT / "pyproject.toml"
 
+# `[project] version = "..."` is the only top-level `version =` key in pyproject.toml;
+# anchoring to the line start avoids matching `target-version` / `python_version`.
+PACKAGE_VERSION_RE = re.compile(r'^version\s*=\s*"([^"]+)"', re.MULTILINE)
+SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)")
+
 GENERATION_HEADER = '''\
 """Auto-generated Pydantic models from OpenResponses OpenAPI specification.
 
@@ -206,13 +211,52 @@ def update_init_metadata(spec_hash: str, spec_version: str) -> None:
     INIT_FILE.write_text(content)
 
 
-def suggest_package_version(spec_version: str) -> str:
-    """Suggest a package version based on the spec version.
+def read_package_version() -> str | None:
+    """Read the current package version from pyproject.toml."""
+    if not PYPROJECT_FILE.exists():
+        return None
+    match = PACKAGE_VERSION_RE.search(PYPROJECT_FILE.read_text())
+    return match.group(1) if match else None
 
-    Package version matches the spec version directly.
-    For hotfixes, use PEP 440 post-releases (e.g., 2.3.0.post1).
+
+def suggest_package_version() -> str | None:
+    """Suggest the next package version for a release off a regenerated spec.
+
+    The package version is deliberately NOT the spec version. The spec is
+    versioned by date (e.g. "2026-04-24"), which is not a valid PEP 440
+    version and so cannot be used as a package version at all; the package
+    follows semantic versioning instead (see the README).
+
+    A spec update normally just adds types, which the README classifies as a
+    minor bump, so that is the default suggestion. It is only a starting
+    point: diff the regenerated module against the released one before
+    releasing, and escalate to a major bump if anything was removed,
+    narrowed, or made required.
+
+    Returns None if the current version cannot be parsed, in which case the
+    bump has to be chosen by hand.
     """
-    return spec_version
+    current = read_package_version()
+    if current is None:
+        return None
+    match = SEMVER_RE.match(current)
+    if match is None:
+        return None
+    major, minor = int(match.group(1)), int(match.group(2))
+    return f"{major}.{minor + 1}.0"
+
+
+def print_version_guidance(spec_version: str) -> None:
+    """Print the spec version and the suggested next package version."""
+    current = read_package_version()
+    suggested = suggest_package_version()
+    print(f"Spec version: {spec_version} (recorded as __spec_version__, not a package version)")
+    print(f"Current package version: {current or 'unknown'}")
+    if suggested is None:
+        print("Could not parse the current package version; choose the next one by hand (see README).")
+        return
+    print(f"Suggested next package version: {suggested} (minor bump; see README versioning policy)")
+    print("Confirm against the diff first: anything removed, narrowed, or newly required needs a major bump.")
 
 
 def main() -> None:
@@ -228,9 +272,8 @@ def main() -> None:
         cached_version = get_cached_version()
         cached_hash = get_cached_hash()
         if cached_version and cached_hash:
-            print(f"Spec version: {cached_version}")
             print(f"Spec hash: {cached_hash}")
-            print(f"Suggested package version: {suggest_package_version(cached_version)}")
+            print_version_guidance(cached_version)
         else:
             print("No spec cached yet. Run without --version to generate.")
         return
@@ -263,9 +306,14 @@ def main() -> None:
     generate_models(current_hash, current_version)
 
     print("\nGeneration complete!")
-    print(f"Spec version: {current_version}")
-    print(f"Suggested package version: {suggest_package_version(current_version)}")
-    print(f"\nTo release, update pyproject.toml version and tag: git tag v{suggest_package_version(current_version)}")
+    print_version_guidance(current_version)
+
+    suggested = suggest_package_version()
+    if suggested:
+        print(
+            f"\nTo release: set the version in pyproject.toml and src/openresponses_types/__init__.py "
+            f"(keep them in sync), then tag: git tag v{suggested}"
+        )
 
 
 if __name__ == "__main__":
