@@ -151,3 +151,92 @@ def test_invalid_model_raises_validation_error():
             type="invalid_type",
             text="Hello!",
         )
+
+
+def _minimal_response_resource_kwargs():
+    """Return the required scalar fields for a ResponseResource, minus `output`."""
+    from openresponses_types.types import TextField, TextResponseFormat
+
+    return {
+        "id": "resp_123",
+        "object": "response",
+        "created_at": 1234567890,
+        "completed_at": 1234567891,
+        "status": "completed",
+        "incomplete_details": None,
+        "model": "gpt-4",
+        "previous_response_id": None,
+        "instructions": None,
+        "error": None,
+        "tools": [],
+        "tool_choice": "auto",
+        "truncation": "auto",
+        "parallel_tool_calls": True,
+        "text": TextField(format=TextResponseFormat(type="text")),
+        "top_p": 1.0,
+        "presence_penalty": 0.0,
+        "frequency_penalty": 0.0,
+        "top_logprobs": 0,
+        "temperature": 0.7,
+        "reasoning": None,
+        "usage": None,
+        "max_output_tokens": None,
+        "max_tool_calls": None,
+        "store": False,
+        "background": False,
+        "service_tier": "default",
+        "metadata": {},
+        "safety_identifier": None,
+        "prompt_cache_key": None,
+    }
+
+
+def test_response_resource_output_accepts_compaction_item():
+    """A `compaction` output item validates as part of ResponseResource.output."""
+    from openresponses_types.types import CompactionBody, ResponseResource
+
+    response = ResponseResource.model_validate(
+        {
+            **_minimal_response_resource_kwargs(),
+            "output": [
+                {
+                    "type": "compaction",
+                    "id": "cmp_1",
+                    "encrypted_content": "encrypted-blob",
+                    "created_by": "resp_0",
+                }
+            ],
+        }
+    )
+
+    assert len(response.output) == 1
+    item = response.output[0]
+    assert isinstance(item, CompactionBody)
+    assert item.type == "compaction"
+    assert item.id == "cmp_1"
+    assert item.encrypted_content == "encrypted-blob"
+    assert item.created_by == "resp_0"
+
+
+def test_compaction_body_created_by_is_optional():
+    """`created_by` is the only optional field on CompactionBody."""
+    from openresponses_types.types import CompactionBody
+
+    body = CompactionBody(type="compaction", id="cmp_1", encrypted_content="enc")
+
+    assert body.created_by is None
+
+
+def test_create_response_body_input_accepts_compaction_summary_item():
+    """A `compaction` input item validates in CreateResponseBody.input."""
+    from openresponses_types.types import CompactionSummaryItemParam, CreateResponseBody
+
+    body = CreateResponseBody.model_validate(
+        {
+            "model": "gpt-4",
+            "input": [{"type": "compaction", "id": "cmp_1", "encrypted_content": "enc"}],
+        }
+    )
+
+    assert isinstance(body.input[0], CompactionSummaryItemParam)
+    assert body.input[0].encrypted_content == "enc"
